@@ -1,0 +1,62 @@
+---
+title: "Map for Laia"
+output: github_document
+---
+
+```{r setup, include=FALSE, echo = FALSE}
+# Basic knitr options
+library(knitr)
+opts_chunk$set(comment = NA, 
+               echo = TRUE, 
+               warning = FALSE, 
+               message = FALSE, 
+               error = TRUE, 
+               cache = FALSE,
+               fig.width = 8.64,
+               fig.height = 4.86,
+               fig.path = 'figures/')
+```
+
+
+## Instructions
+
+1. Download `TONGAT_POINTS.xlsx` into this directory.
+
+2. Download the Magude bairros shapefile from https://github.com/joebrew/magude_bairros.
+
+3. "Knit" this `.Rmd` follow in RStudio.
+
+```{r}
+# Libraries
+library(tidyverse)
+library(readxl)
+library(sp)
+library(raster)
+library(rgdal)
+
+# Read in the data
+data <- read_excel('TONGAT_POINTS.xlsx')
+
+# Make spatial
+data_sp <- data
+coordinates(data_sp) <- ~x+y
+
+# Read in the Magude bairros shapefile
+magude_bairros <- readOGR('magude_bairros', 'magude_bairros')
+
+# Plot to ensure that it's working
+plot(magude_bairros)
+
+# Plot the points too
+points(data_sp, col = 'red')
+
+# Get identical CRS
+proj4string(data_sp) <- proj4string(magude_bairros)
+
+# Extract the neighborhoods
+neighborhoods <- extract(polygons(magude_bairros), data_sp)
+data$bairro <- magude_bairros@data$barr_nm[neighborhoods$poly.ID]
+
+# Write the data
+write_csv(data, 'output.csv')
+```
